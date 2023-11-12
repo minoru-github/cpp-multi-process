@@ -63,6 +63,8 @@ void wait_example()
 
 void wait_for_examople()
 {
+	std::cout << "wait_for_example" << std::endl;
+
 	auto some_function = [] {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	};
@@ -94,6 +96,56 @@ void wait_for_examople()
 			std::cout << "deferred" << std::endl;
 		}
 	}
+
+	std::cout << "complete" << std::endl;
+}
+
+void wait_for_example2()
+{
+	std::cout << "wait_for_example2" << std::endl;
+
+	auto some_function = [] {
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	};
+
+	std::vector<std::future<void>> futures;
+	for (int i = 0; i < 10; ++i)
+	{
+		futures.push_back(std::async(std::launch::async, some_function));
+	}
+
+	// 全処理合計のタイムアウト時間を設定する
+	auto now = std::chrono::system_clock::now();
+	auto total = std::chrono::milliseconds(0);
+	constexpr auto timeout = std::chrono::milliseconds(1000);
+	auto remain = timeout - total;
+	std::cout << "remain: " << remain.count() << std::endl;
+
+	for (auto& future : futures)
+	{
+		const auto result = future.wait_for(remain);
+		if (result == std::future_status::timeout)
+		{
+			// タイムアウトした場合は、残りの処理をキャンセルする
+			// TODO
+			break;
+		}
+
+		// 処理時間をstd::chrono::durationに変換し、合計時間に加算する
+		const auto elapsed = std::chrono::system_clock::now() - now;
+		total += std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+
+		remain = timeout - total;
+		if (remain <= std::chrono::milliseconds(0))
+		{
+			// タイムアウトした場合は、残りの処理をキャンセルする
+			// TODO
+			break;
+		}
+		std::cout << "remain: " << remain.count() << std::endl;
+	}
+
+	std::cout << "complete" << std::endl;
 }
 
 int main()
@@ -101,6 +153,7 @@ int main()
 	get_example();
 	wait_example();
 	wait_for_examople();
+	wait_for_example2();
 
 	return 0;
 }
