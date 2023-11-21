@@ -97,7 +97,7 @@ void wait_for_examople()
 		}
 	}
 
-	std::cout << "complete" << std::endl;
+	std::cout << "complete" << std::endl << std::endl;
 }
 
 void wait_for_example2()
@@ -145,7 +145,36 @@ void wait_for_example2()
 		std::cout << "remain: " << remain.count() << std::endl;
 	}
 
-	std::cout << "complete" << std::endl;
+	std::cout << "complete" << std::endl << std::endl;
+}
+
+void method_example() {
+	std::cout << "method_example" << std::endl;
+
+	class Hoge
+	{
+	public:
+		Hoge() {};
+		~Hoge() {};
+		void func(const int id) {
+			std::cout << "id:" << id << std::endl;
+		}
+	};
+
+	std::vector<std::future<void>> futures;
+	const auto hoge = Hoge();
+	for (int n = 0; n < 10; n++)
+	{
+		// クラスのメソッドを非同期化する場合はインスタンスを引数として渡す必要がある
+		futures.push_back(std::async(std::launch::async, &Hoge::func, hoge, n));
+	}
+
+	for (auto& future : futures)
+	{
+		future.wait();
+	}
+
+	std::cout << "complete" << std::endl << std::endl;
 }
 
 int main()
@@ -154,6 +183,7 @@ int main()
 	wait_example();
 	wait_for_examople();
 	wait_for_example2();
+	method_example();
 
 	return 0;
 }
